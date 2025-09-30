@@ -72,8 +72,21 @@ with sync_playwright() as p:
 
             oos_rows.append((name, sku))
 
-    # Deduplicate & sort
+    # Deduplicate & sort by (name, sku)
     oos_rows = sorted(set(oos_rows), key=lambda x: (x[0].lower(), x[1].lower()))
+
+    # --- NEW: Filter to ensure no duplicate SKUs (keeps first seen non-empty SKU) ---
+    filtered = []
+    seen_skus = set()
+    for name, sku in oos_rows:
+        key = (sku or "").strip().lower()
+        if key:
+            if key in seen_skus:
+                continue
+            seen_skus.add(key)
+        filtered.append((name, sku))
+    oos_rows = filtered
+    # -------------------------------------------------------------------------------
 
     # Print summary
     print(f"Total products found: {total}")
@@ -90,9 +103,3 @@ with sync_playwright() as p:
     print(f"\nWrote CSV to: {os.path.abspath(OUTPUT_CSV)}")
 
     browser.close()
-
-
-
-
-
-
